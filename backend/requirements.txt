@@ -3,7 +3,5 @@ uvicorn
 paddleocr
 paddlepaddle
 PyMuPDF
-pdf2image
 python-multipart
 python-docx
-poppler
