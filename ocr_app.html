@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced OCR Extractor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel (for in-browser JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .font-lexend {
+            font-family: 'Lexend', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* slate-500 */
+        }
+        /* Spinner animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        /* File input custom */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        /* Transition */
+        .transition-all {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Configuration ---
+        const API_BASE_URL = "http://127.0.0.1:8000";
+
+        // --- Icon Components (Inline SVGs) ---
+        const UploadCloudIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 16 4-4 4 4"/>
+            </svg>
+        );
+
+        const FileTextIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/>
+            </svg>
+        );
+
+        const DownloadIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+        );
+
+        const ClipboardIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+            </svg>
+        );
+
+        const CheckIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        );
+
+        const LoaderIcon = ({ className }) => (
+            <svg className={className + " spinner"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" x2="12" y1="2" y2="6"/><line x1="12" x2="12" y1="18" y2="22"/><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"/><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"/><line x1="2" x2="6" y1="12" y2="12"/><line x1="18" x2="22" y1="12" y2="12"/><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"/><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"/>
+            </svg>
+        );
+
+        const XCircleIcon = ({ className }) => (
+            <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+            </svg>
+        );
+
+        // --- Main App Component ---
+        function App() {
+            // App State
+            const [status, setStatus] = useState('idle'); // 'idle', 'uploading', 'processing', 'success', 'error'
+            const [file, setFile] = useState(null);
+            const [filePreview, setFilePreview] = useState(null);
+            const [extractedText, setExtractedText] = useState("");
+            const [errorMessage, setErrorMessage] = useState("");
+            const [isCopied, setIsCopied] = useState(false);
+            const [isDownloading, setIsDownloading] = useState(null); // null, 'txt', 'docx'
+
+            const fileInputRef = useRef(null);
+
+            // Cleanup object URLs
+            useEffect(() => {
+                return () => {
+                    if (filePreview) {
+                        URL.revokeObjectURL(filePreview);
+                    }
+                };
+            }, [filePreview]);
+
+            const handleFileChange = (e) => {
+                const selectedFile = e.target.files?.[0];
+                if (selectedFile) {
+                    setFile(selectedFile);
+                    setStatus('idle');
+                    setExtractedText("");
+                    setErrorMessage("");
+                    if (filePreview) {
+                        URL.revokeObjectURL(filePreview);
+                    }
+                    setFilePreview(URL.createObjectURL(selectedFile));
+                }
+            };
+            
+            const handleDragOver = (e) => {
+                e.preventDefault();
+            };
+            
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const droppedFile = e.dataTransfer.files?.[0];
+                if (droppedFile) {
+                    // Simulate file input change
+                    fileInputRef.current.files = e.dataTransfer.files;
+                    handleFileChange({ target: fileInputRef.current });
+                }
+            };
+
+            const handleExtract = async () => {
+                if (!file) return;
+
+                setStatus('uploading'); // State for both upload + processing
+                setExtractedText("");
+                setErrorMessage("");
+
+                const formData = new FormData();
+                formData.append("file", file);
+
+                try {
+                    const res = await fetch(`${API_BASE_URL}/extract-text`, {
+                        method: "POST",
+                        body: formData,
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(data.detail || `Server error: ${res.status}`);
+                    }
+
+                    setExtractedText(data.text);
+                    setStatus('success');
+                } catch (error) {
+                    console.error("Extraction failed:", error);
+                    setErrorMessage(error.message);
+                    setStatus('error');
+                }
+            };
+            
+            // Re-usable download handler
+            const handleDownload = async (format) => {
+                if (!extractedText || isDownloading) return;
+
+                setIsDownloading(format);
+                const endpoint = format === 'docx' ? '/download-docx' : '/download-txt';
+                const filename = format === 'docx' ? 'extracted.docx' : 'extracted.txt';
+
+                try {
+                    const res = await fetch(API_BASE_URL + endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: extractedText })
+                    });
+                    
+                    if (!res.ok) {
+                         const errorDetail = (await res.json().catch(() => ({}))).detail;
+                         throw new Error(errorDetail || `Server error: ${res.status}`);
+                    }
+                    
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+
+                } catch (error) {
+                    console.error("Download failed:", error);
+                    setErrorMessage(`Download failed: ${error.message}`);
+                    setStatus('error'); // Show error on main status
+                } finally {
+                    setIsDownloading(null);
+                }
+            };
+
+            // Use the more robust clipboard copy method
+            const handleCopy = () => {
+                if (!extractedText) return;
+                
+                const textArea = document.createElement("textarea");
+                textArea.value = extractedText;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setIsCopied(true);
+                    setTimeout(() => setIsCopied(false), 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const formatBytes = (bytes, decimals = 2) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            };
+
+            const isLoading = status === 'uploading' || status === 'processing';
+            const isDownloadingDocx = isDownloading === 'docx';
+            const isDownloadingTxt = isDownloading === 'txt';
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    {/* --- Header --- */}
+                    <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
+                        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="flex justify-between items-center h-16">
+                                <div className="flex-shrink-0 flex items-center">
+                                    <FileTextIcon className="h-8 w-8 text-indigo-400" />
+                                    <span className="ml-3 text-2xl font-lexend font-semibold text-white">Advanced OCR</span>
+                                 </div>
+                                 <button
+                                     onClick={handleExtract}
+                                     disabled={!file || isLoading}
+                                     className={`relative inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+                                         (!file || isLoading)
+                                             ? 'bg-slate-500 cursor-not-allowed'
+                                             : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500'
+                                     } transition-all`}
+                                 >
+                                    {isLoading && (
+                                        <LoaderIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5" />
+                                    )}
+                                    <span className={isLoading ? 'opacity-0' : 'opacity-100'}>
+                                        {status === 'success' ? 'Extract Again' : 'Extract Text'}
+                                    </span>
+                                 </button>
+                            </div>
+                        </nav>
+                    </header>
+
+                    {/* --- Main Content --- */}
+                    <main className="flex-grow max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+
+                            {/* --- Left Pane: Uploader & Preview --- */}
+                            <div className="flex flex-col h-full">
+                                <h2 className="text-xl font-lexend font-semibold mb-4">1. Upload File</h2>
+                                <label
+                                    htmlFor="file-upload"
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                    className={`flex flex-col items-center justify-center w-full h-48 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-800 transition-colors ${file ? 'border-indigo-500' : ''}`}
+                                >
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <UploadCloudIcon className="w-10 h-10 mb-3 text-slate-400" />
+                                        <p className="mb-2 text-sm text-slate-300">
+                                            <span className="font-semibold">Click to upload</span> or drag and drop
+                                        </p>
+                                        <p className="text-xs text-slate-400">PDF, PNG, JPG, BMP, or WEBP</p>
+                                    </div>
+                                    <input id="file-upload" ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept="application/pdf, image/png, image/jpeg, image/bmp, image/webp" />
+                                </label>
+
+                                <h2 className="text-xl font-lexend font-semibold mt-6 mb-4">2. File Preview</h2>
+                                <div className="flex-grow bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-center justify-center min-h-[300px] lg:min-h-0">
+                                    {isLoading && (
+                                        <div className="flex flex-col items-center justify-center text-slate-400">
+                                            <LoaderIcon className="h-12 w-12 text-indigo-400" />
+                                            <p className="mt-4 text-lg font-medium">
+                                                {status === 'uploading' ? 'Uploading file...' : 'Processing file...'}
+                                            </p>
+                                            <p className="text-sm">This may take a moment...</p>
+                                        </div>
+                                    )}
+                                    {status === 'error' && (
+                                        <div className="flex flex-col items-center justify-center text-red-400">
+                                            <XCircleIcon className="h-12 w-12" />
+                                            <p className="mt-4 text-lg font-medium">Extraction Failed</p>
+                                            <p className="text-sm max-w-xs text-center">{errorMessage}</p>
+                                        </div>
+                                    )}
+                                    {(!filePreview && !isLoading && status !== 'error') && (
+                                        <p className="text-slate-500">Upload a file to see a preview</p>
+                                    )}
+                                    {(filePreview && !isLoading && status !== 'error') && (
+                                        file.type.startsWith("image/") ? (
+                                            <img src={filePreview} alt="File preview" className="max-h-[500px] w-auto rounded-md object-contain" />
+                                        ) : (
+                                            <iframe src={filePreview} className="w-full h-full min-h-[500px] rounded-md border-0" title="File preview"></iframe>
+                                        )
+                                    )}
+                                </div>
+                                {file && (
+                                     <div className="mt-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-between">
+                                        <div className="flex items-center min-w-0">
+                                            <FileTextIcon className="h-5 w-5 text-indigo-400 flex-shrink-0" />
+                                            <p className="ml-2 text-sm text-slate-300 truncate" title={file.name}>{file.name}</p>
+                                        </div>
+                                        <span className="ml-4 text-sm text-slate-400 flex-shrink-0">{formatBytes(file.size)}</span>
+                                     </div>
+                                )}
+                            </div>
+
+                            {/* --- Right Pane: Extracted Text --- */}
+                            <div className="flex flex-col h-full">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-lexend font-semibold">3. Extracted Text</h2>
+                                    {status === 'success' && (
+                                        <div className="flex space-x-2">
+                                            <button 
+                                                onClick={handleCopy}
+                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors"
+                                            >
+                                                {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <ClipboardIcon className="w-4 h-4" />}
+                                                <span className="ml-1.5">{isCopied ? 'Copied!' : 'Copy'}</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDownload('txt')}
+                                                disabled={isDownloading}
+                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                                            >
+                                                {isDownloadingTxt ? <LoaderIcon className="w-4 h-4" /> : <DownloadIcon className="w-4 h-4" />}
+                                                <span className="ml-1.5">.txt</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDownload('docx')}
+                                                disabled={isDownloading}
+                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                                            >
+                                                {isDownloadingDocx ? <LoaderIcon className="w-4 h-4" /> : <DownloadIcon className="w-4 h-4" />}
+                                                <span className="ml-1.5">.docx</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-grow h-full min-h-[300px] lg:min-h-0">
+                                    <textarea
+                                        readOnly
+                                        value={
+                                            isLoading ? "Processing... please wait." :
+                                            status === 'error' ? `Error: ${errorMessage}` :
+                                            status === 'success' ? extractedText :
+                                            "Extracted text will appear here once processing is complete."
+                                        }
+                                        className={`w-full h-full p-4 rounded-lg bg-slate-800/50 border border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-slate-300 placeholder-slate-500 ${status === 'error' ? 'text-red-400' : ''}`}
+                                        placeholder="Extracted text will appear here..."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // --- Render the App ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+</body>
+</html>
