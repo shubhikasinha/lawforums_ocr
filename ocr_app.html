@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced OCR Extractor</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Document OCR Scanner</title>
     <!-- React -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -14,58 +13,183 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Source+Sans+Pro:wght@400;600&display=swap"
+        rel="stylesheet">
     <style>
-        /* Custom Styles */
+        :root {
+            --primary: #3a1d0b;
+            --primary-light: #5c3d2a;
+            --primary-dark: #2a1508;
+            --bg-cream: #faf8f5;
+            --bg-white: #ffffff;
+            --text-dark: #2d2d2d;
+            --text-muted: #6b6b6b;
+            --border: #e0dbd5;
+            --shadow: rgba(58, 29, 11, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-dark);
+            line-height: 1.6;
         }
-        .font-lexend {
-            font-family: 'Lexend', sans-serif;
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Merriweather', Georgia, serif;
+            color: var(--primary);
         }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
-            background: #1e293b; /* slate-800 */
+            background: var(--bg-cream);
         }
+
         ::-webkit-scrollbar-thumb {
-            background: #475569; /* slate-600 */
+            background: var(--primary-light);
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #64748b; /* slate-500 */
+            background: var(--primary);
         }
+
         /* Spinner animation */
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
+
         .spinner {
             animation: spin 1s linear infinite;
         }
-        /* File input custom */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-        }
-        .file-input-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
+
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
         }
-        /* Transition */
-        .transition-all {
-            transition: all 0.3s ease-in-out;
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-primary:disabled {
+            background: #a89080;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-cream);
+            border-color: var(--primary-light);
+        }
+
+        /* Card styles */
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-cream);
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-light);
+            background: white;
+        }
+
+        .upload-area.has-file {
+            border-color: var(--primary);
+            border-style: solid;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        /* Text output area */
+        .text-output {
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 15px;
+            line-height: 1.8;
+            color: var(--text-dark);
+            white-space: pre-wrap;
+            padding: 24px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        /* Page separator in text */
+        .page-separator {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin: 16px 0;
+            border-top: 1px solid var(--border);
+            padding-top: 16px;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-200">
+
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -74,68 +198,85 @@
         // --- Configuration ---
         const API_BASE_URL = "http://127.0.0.1:8000";
 
-        // --- Icon Components (Inline SVGs) ---
-        const UploadCloudIcon = ({ className }) => (
+        // --- Icon Components ---
+        const UploadIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 16 4-4 4 4"/>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" />
             </svg>
         );
 
-        const FileTextIcon = ({ className }) => (
+        const FileIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/>
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" />
             </svg>
         );
 
         const DownloadIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" />
             </svg>
         );
 
-        const ClipboardIcon = ({ className }) => (
+        const CopyIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
             </svg>
         );
 
         const CheckIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
+                <polyline points="20 6 9 17 4 12" />
             </svg>
         );
 
         const LoaderIcon = ({ className }) => (
             <svg className={className + " spinner"} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" x2="12" y1="2" y2="6"/><line x1="12" x2="12" y1="18" y2="22"/><line x1="4.93" x2="7.76" y1="4.93" y2="7.76"/><line x1="16.24" x2="19.07" y1="16.24" y2="19.07"/><line x1="2" x2="6" y1="12" y2="12"/><line x1="18" x2="22" y1="12" y2="12"/><line x1="4.93" x2="7.76" y1="19.07" y2="16.24"/><line x1="16.24" x2="19.07" y1="7.76" y2="4.93"/>
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
             </svg>
         );
 
-        const XCircleIcon = ({ className }) => (
+        const ScanIcon = ({ className }) => (
             <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/>
+                <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /><line x1="8" x2="16" y1="12" y2="12" />
             </svg>
         );
+
+        // --- Format Text for Better Readability ---
+        function formatExtractedText(text) {
+            if (!text) return "";
+
+            // Clean up and format the text
+            let formatted = text
+                // Normalize line breaks
+                .replace(/\r\n/g, '\n')
+                // Remove excessive blank lines (more than 2)
+                .replace(/\n{3,}/g, '\n\n')
+                // Trim whitespace from each line
+                .split('\n')
+                .map(line => line.trim())
+                .join('\n');
+
+            return formatted;
+        }
 
         // --- Main App Component ---
         function App() {
-            // App State
-            const [status, setStatus] = useState('idle'); // 'idle', 'uploading', 'processing', 'success', 'error'
+            const [status, setStatus] = useState('idle');
             const [file, setFile] = useState(null);
             const [filePreview, setFilePreview] = useState(null);
             const [extractedText, setExtractedText] = useState("");
             const [errorMessage, setErrorMessage] = useState("");
             const [isCopied, setIsCopied] = useState(false);
-            const [isDownloading, setIsDownloading] = useState(null); // null, 'txt', 'docx'
-
+            const [isDownloading, setIsDownloading] = useState(null);
+            const [uploadProgress, setUploadProgress] = useState(0);
+            const [processProgress, setProcessProgress] = useState(0);
+            const [jobId, setJobId] = useState(null);
+            const eventSourceRef = useRef(null);
             const fileInputRef = useRef(null);
 
-            // Cleanup object URLs
             useEffect(() => {
                 return () => {
-                    if (filePreview) {
-                        URL.revokeObjectURL(filePreview);
-                    }
+                    if (filePreview) URL.revokeObjectURL(filePreview);
                 };
             }, [filePreview]);
 
@@ -146,22 +287,17 @@
                     setStatus('idle');
                     setExtractedText("");
                     setErrorMessage("");
-                    if (filePreview) {
-                        URL.revokeObjectURL(filePreview);
-                    }
+                    if (filePreview) URL.revokeObjectURL(filePreview);
                     setFilePreview(URL.createObjectURL(selectedFile));
                 }
             };
-            
-            const handleDragOver = (e) => {
-                e.preventDefault();
-            };
-            
+
+            const handleDragOver = (e) => e.preventDefault();
+
             const handleDrop = (e) => {
                 e.preventDefault();
                 const droppedFile = e.dataTransfer.files?.[0];
                 if (droppedFile) {
-                    // Simulate file input change
                     fileInputRef.current.files = e.dataTransfer.files;
                     handleFileChange({ target: fileInputRef.current });
                 }
@@ -170,35 +306,102 @@
             const handleExtract = async () => {
                 if (!file) return;
 
-                setStatus('uploading'); // State for both upload + processing
+                setUploadProgress(0);
+                setProcessProgress(0);
+                setJobId(null);
+                if (eventSourceRef.current) {
+                    try { eventSourceRef.current.close(); } catch (e) { }
+                    eventSourceRef.current = null;
+                }
+                setStatus('uploading');
                 setExtractedText("");
                 setErrorMessage("");
-
                 const formData = new FormData();
                 formData.append("file", file);
 
                 try {
-                    const res = await fetch(`${API_BASE_URL}/extract-text`, {
-                        method: "POST",
-                        body: formData,
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', API_BASE_URL + '/extract-text');
+
+                        xhr.upload.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                setUploadProgress(Math.round((e.loaded / e.total) * 100));
+                            }
+                        };
+
+                        xhr.onreadystatechange = () => {
+                            if (xhr.readyState === 4) {
+                                if (xhr.status >= 200 && xhr.status < 300) {
+                                    try {
+                                        const data = JSON.parse(xhr.responseText);
+                                        const id = data.job_id;
+                                        setJobId(id);
+                                        setStatus('processing');
+
+                                        const startProgressStream = () => {
+                                            try {
+                                                const es = new EventSource(`${API_BASE_URL}/progress/${id}`);
+                                                eventSourceRef.current = es;
+
+                                                es.onmessage = async (ev) => {
+                                                    try {
+                                                        const payload = JSON.parse(ev.data);
+                                                        setProcessProgress(payload.progress || 0);
+
+                                                        if (payload.status === 'finished') {
+                                                            es.close();
+                                                            eventSourceRef.current = null;
+                                                            const r = await fetch(`${API_BASE_URL}/result/${id}`);
+                                                            const jr = await r.json();
+                                                            setExtractedText(formatExtractedText(jr.text || ""));
+                                                            setStatus('success');
+                                                        } else if (payload.status === 'error') {
+                                                            es.close();
+                                                            eventSourceRef.current = null;
+                                                            setErrorMessage(payload.error || 'Processing error');
+                                                            setStatus('error');
+                                                        }
+                                                    } catch (err) {
+                                                        console.error('Error parsing progress data:', err);
+                                                    }
+                                                };
+
+                                                es.onerror = (ev) => {
+                                                    console.warn('EventSource error, reconnecting...', ev);
+                                                    es.close();
+                                                    eventSourceRef.current = null;
+                                                    setTimeout(startProgressStream, 1000);
+                                                };
+                                            } catch (err) {
+                                                console.error('Failed to create EventSource:', err);
+                                                reject(err);
+                                            }
+                                        };
+
+                                        startProgressStream();
+                                        resolve();
+                                    } catch (err) {
+                                        reject(err);
+                                    }
+                                } else {
+                                    let msg = 'Upload failed';
+                                    try { msg = JSON.parse(xhr.responseText).detail || msg; } catch (e) { }
+                                    reject(new Error(msg));
+                                }
+                            }
+                        };
+
+                        xhr.onerror = () => reject(new Error('Network error during upload'));
+                        xhr.send(formData);
                     });
-
-                    const data = await res.json();
-
-                    if (!res.ok) {
-                        throw new Error(data.detail || `Server error: ${res.status}`);
-                    }
-
-                    setExtractedText(data.text);
-                    setStatus('success');
                 } catch (error) {
                     console.error("Extraction failed:", error);
                     setErrorMessage(error.message);
                     setStatus('error');
                 }
             };
-            
-            // Re-usable download handler
+
             const handleDownload = async (format) => {
                 if (!extractedText || isDownloading) return;
 
@@ -212,12 +415,12 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ text: extractedText })
                     });
-                    
+
                     if (!res.ok) {
-                         const errorDetail = (await res.json().catch(() => ({}))).detail;
-                         throw new Error(errorDetail || `Server error: ${res.status}`);
+                        const errorDetail = (await res.json().catch(() => ({}))).detail;
+                        throw new Error(errorDetail || `Server error: ${res.status}`);
                     }
-                    
+
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement("a");
@@ -231,16 +434,15 @@
                 } catch (error) {
                     console.error("Download failed:", error);
                     setErrorMessage(`Download failed: ${error.message}`);
-                    setStatus('error'); // Show error on main status
+                    setStatus('error');
                 } finally {
                     setIsDownloading(null);
                 }
             };
 
-            // Use the more robust clipboard copy method
             const handleCopy = () => {
                 if (!extractedText) return;
-                
+
                 const textArea = document.createElement("textarea");
                 textArea.value = extractedText;
                 textArea.style.position = "fixed";
@@ -262,156 +464,242 @@
                 if (bytes === 0) return '0 Bytes';
                 const k = 1024;
                 const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
                 const i = Math.floor(Math.log(bytes) / Math.log(k));
                 return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
             };
 
             const isLoading = status === 'uploading' || status === 'processing';
-            const isDownloadingDocx = isDownloading === 'docx';
-            const isDownloadingTxt = isDownloading === 'txt';
 
             return (
-                <div className="min-h-screen flex flex-col">
-                    {/* --- Header --- */}
-                    <header className="bg-slate-950/70 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-10">
-                        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex justify-between items-center h-16">
-                                <div className="flex-shrink-0 flex items-center">
-                                    <FileTextIcon className="h-8 w-8 text-indigo-400" />
-                                    <span className="ml-3 text-2xl font-lexend font-semibold text-white">Advanced OCR</span>
-                                 </div>
-                                 <button
-                                     onClick={handleExtract}
-                                     disabled={!file || isLoading}
-                                     className={`relative inline-flex items-center justify-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                                         (!file || isLoading)
-                                             ? 'bg-slate-500 cursor-not-allowed'
-                                             : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-indigo-500'
-                                     } transition-all`}
-                                 >
-                                    {isLoading && (
-                                        <LoaderIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5" />
-                                    )}
-                                    <span className={isLoading ? 'opacity-0' : 'opacity-100'}>
-                                        {status === 'success' ? 'Extract Again' : 'Extract Text'}
-                                    </span>
-                                 </button>
+                <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                    {/* Header */}
+                    <header style={{
+                        background: 'white',
+                        borderBottom: '1px solid var(--border)',
+                        padding: '16px 24px',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 10
+                    }}>
+                        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <ScanIcon style={{ width: '28px', height: '28px', color: 'var(--primary)' }} />
+                                <h1 style={{ fontSize: '22px', fontWeight: '700', margin: 0 }}>Document Scanner</h1>
                             </div>
-                        </nav>
+                            <button
+                                onClick={handleExtract}
+                                disabled={!file || isLoading}
+                                className="btn btn-primary"
+                                style={{ minWidth: '140px', justifyContent: 'center' }}
+                            >
+                                {isLoading ? (
+                                    <LoaderIcon style={{ width: '18px', height: '18px' }} />
+                                ) : (
+                                    <>
+                                        <ScanIcon style={{ width: '18px', height: '18px' }} />
+                                        {status === 'success' ? 'Scan Again' : 'Scan Document'}
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </header>
 
-                    {/* --- Main Content --- */}
-                    <main className="flex-grow max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 w-full">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+                    {/* Main Content */}
+                    <main style={{ flex: 1, maxWidth: '1200px', margin: '0 auto', padding: '32px 24px', width: '100%' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
 
-                            {/* --- Left Pane: Uploader & Preview --- */}
-                            <div className="flex flex-col h-full">
-                                <h2 className="text-xl font-lexend font-semibold mb-4">1. Upload File</h2>
+                            {/* Left Panel - Upload */}
+                            <div>
+                                <h2 style={{ fontSize: '18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{
+                                        background: 'var(--primary)',
+                                        color: 'white',
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '12px',
+                                        fontFamily: 'Source Sans Pro, sans-serif'
+                                    }}>1</span>
+                                    Upload Document
+                                </h2>
+
                                 <label
                                     htmlFor="file-upload"
                                     onDragOver={handleDragOver}
                                     onDrop={handleDrop}
-                                    className={`flex flex-col items-center justify-center w-full h-48 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-800/50 hover:bg-slate-800 transition-colors ${file ? 'border-indigo-500' : ''}`}
+                                    className={`upload-area ${file ? 'has-file' : ''}`}
+                                    style={{ display: 'block', marginBottom: '24px' }}
                                 >
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <UploadCloudIcon className="w-10 h-10 mb-3 text-slate-400" />
-                                        <p className="mb-2 text-sm text-slate-300">
-                                            <span className="font-semibold">Click to upload</span> or drag and drop
-                                        </p>
-                                        <p className="text-xs text-slate-400">PDF, PNG, JPG, BMP, or WEBP</p>
-                                    </div>
-                                    <input id="file-upload" ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} accept="application/pdf, image/png, image/jpeg, image/bmp, image/webp" />
+                                    <UploadIcon style={{ width: '40px', height: '40px', color: 'var(--primary-light)', margin: '0 auto 12px' }} />
+                                    <p style={{ color: 'var(--text-dark)', marginBottom: '4px', fontWeight: '600' }}>
+                                        Click to upload or drag and drop
+                                    </p>
+                                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+                                        PDF, PNG, JPG, BMP, or WEBP
+                                    </p>
+                                    <input
+                                        id="file-upload"
+                                        ref={fileInputRef}
+                                        type="file"
+                                        style={{ display: 'none' }}
+                                        onChange={handleFileChange}
+                                        accept="application/pdf, image/png, image/jpeg, image/bmp, image/webp"
+                                    />
                                 </label>
 
-                                <h2 className="text-xl font-lexend font-semibold mt-6 mb-4">2. File Preview</h2>
-                                <div className="flex-grow bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-center justify-center min-h-[300px] lg:min-h-0">
+                                {file && (
+                                    <div className="card" style={{ padding: '12px 16px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                            <FileIcon style={{ width: '20px', height: '20px', color: 'var(--primary)', flexShrink: 0 }} />
+                                            <span style={{ fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={file.name}>
+                                                {file.name}
+                                            </span>
+                                        </div>
+                                        <span style={{ fontSize: '13px', color: 'var(--text-muted)', flexShrink: 0, marginLeft: '12px' }}>
+                                            {formatBytes(file.size)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Preview */}
+                                <h2 style={{ fontSize: '18px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{
+                                        background: 'var(--primary)',
+                                        color: 'white',
+                                        width: '24px',
+                                        height: '24px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '12px',
+                                        fontFamily: 'Source Sans Pro, sans-serif'
+                                    }}>2</span>
+                                    Preview
+                                </h2>
+
+                                <div className="card" style={{ padding: '16px', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     {isLoading && (
-                                        <div className="flex flex-col items-center justify-center text-slate-400">
-                                            <LoaderIcon className="h-12 w-12 text-indigo-400" />
-                                            <p className="mt-4 text-lg font-medium">
-                                                {status === 'uploading' ? 'Uploading file...' : 'Processing file...'}
+                                        <div style={{ textAlign: 'center' }}>
+                                            <LoaderIcon style={{ width: '40px', height: '40px', color: 'var(--primary)', margin: '0 auto 16px' }} />
+                                            <p style={{ color: 'var(--text-dark)', fontWeight: '600', marginBottom: '8px' }}>
+                                                {status === 'uploading' ? 'Uploading...' : 'Scanning document...'}
                                             </p>
-                                            <p className="text-sm">This may take a moment...</p>
+                                            <div style={{ width: '200px', margin: '0 auto' }}>
+                                                <div className="progress-bar">
+                                                    <div
+                                                        className="progress-bar-fill"
+                                                        style={{ width: `${status === 'uploading' ? uploadProgress : processProgress}%` }}
+                                                    />
+                                                </div>
+                                                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                                                    {status === 'uploading' ? `${uploadProgress}%` : `${processProgress}%`}
+                                                </p>
+                                            </div>
                                         </div>
                                     )}
                                     {status === 'error' && (
-                                        <div className="flex flex-col items-center justify-center text-red-400">
-                                            <XCircleIcon className="h-12 w-12" />
-                                            <p className="mt-4 text-lg font-medium">Extraction Failed</p>
-                                            <p className="text-sm max-w-xs text-center">{errorMessage}</p>
+                                        <div style={{ textAlign: 'center', color: '#b91c1c' }}>
+                                            <p style={{ fontWeight: '600', marginBottom: '8px' }}>Scan Failed</p>
+                                            <p style={{ fontSize: '14px' }}>{errorMessage}</p>
                                         </div>
                                     )}
                                     {(!filePreview && !isLoading && status !== 'error') && (
-                                        <p className="text-slate-500">Upload a file to see a preview</p>
+                                        <p style={{ color: 'var(--text-muted)' }}>Upload a document to preview</p>
                                     )}
                                     {(filePreview && !isLoading && status !== 'error') && (
                                         file.type.startsWith("image/") ? (
-                                            <img src={filePreview} alt="File preview" className="max-h-[500px] w-auto rounded-md object-contain" />
+                                            <img src={filePreview} alt="Preview" style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '4px' }} />
                                         ) : (
-                                            <iframe src={filePreview} className="w-full h-full min-h-[500px] rounded-md border-0" title="File preview"></iframe>
+                                            <iframe src={filePreview} style={{ width: '100%', height: '400px', border: 'none', borderRadius: '4px' }} title="Preview" />
                                         )
                                     )}
                                 </div>
-                                {file && (
-                                     <div className="mt-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-between">
-                                        <div className="flex items-center min-w-0">
-                                            <FileTextIcon className="h-5 w-5 text-indigo-400 flex-shrink-0" />
-                                            <p className="ml-2 text-sm text-slate-300 truncate" title={file.name}>{file.name}</p>
-                                        </div>
-                                        <span className="ml-4 text-sm text-slate-400 flex-shrink-0">{formatBytes(file.size)}</span>
-                                     </div>
-                                )}
                             </div>
 
-                            {/* --- Right Pane: Extracted Text --- */}
-                            <div className="flex flex-col h-full">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-xl font-lexend font-semibold">3. Extracted Text</h2>
-                                    {status === 'success' && (
-                                        <div className="flex space-x-2">
-                                            <button 
-                                                onClick={handleCopy}
-                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors"
-                                            >
-                                                {isCopied ? <CheckIcon className="w-4 h-4 text-green-400" /> : <ClipboardIcon className="w-4 h-4" />}
-                                                <span className="ml-1.5">{isCopied ? 'Copied!' : 'Copy'}</span>
+                            {/* Right Panel - Extracted Text */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <h2 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                                        <span style={{
+                                            background: 'var(--primary)',
+                                            color: 'white',
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '12px',
+                                            fontFamily: 'Source Sans Pro, sans-serif'
+                                        }}>3</span>
+                                        Extracted Text
+                                    </h2>
+
+                                    {status === 'success' && extractedText && (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button onClick={handleCopy} className="btn btn-secondary" style={{ padding: '8px 12px' }}>
+                                                {isCopied ? <CheckIcon style={{ width: '16px', height: '16px', color: '#16a34a' }} /> : <CopyIcon style={{ width: '16px', height: '16px' }} />}
+                                                <span>{isCopied ? 'Copied!' : 'Copy'}</span>
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDownload('txt')}
                                                 disabled={isDownloading}
-                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                                                className="btn btn-secondary"
+                                                style={{ padding: '8px 12px' }}
                                             >
-                                                {isDownloadingTxt ? <LoaderIcon className="w-4 h-4" /> : <DownloadIcon className="w-4 h-4" />}
-                                                <span className="ml-1.5">.txt</span>
+                                                {isDownloading === 'txt' ? <LoaderIcon style={{ width: '16px', height: '16px' }} /> : <DownloadIcon style={{ width: '16px', height: '16px' }} />}
+                                                <span>.txt</span>
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDownload('docx')}
                                                 disabled={isDownloading}
-                                                className="flex items-center px-3 py-1.5 border border-slate-600 bg-slate-700/50 hover:bg-slate-700 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                                                className="btn btn-secondary"
+                                                style={{ padding: '8px 12px' }}
                                             >
-                                                {isDownloadingDocx ? <LoaderIcon className="w-4 h-4" /> : <DownloadIcon className="w-4 h-4" />}
-                                                <span className="ml-1.5">.docx</span>
+                                                {isDownloading === 'docx' ? <LoaderIcon style={{ width: '16px', height: '16px' }} /> : <DownloadIcon style={{ width: '16px', height: '16px' }} />}
+                                                <span>.docx</span>
                                             </button>
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex-grow h-full min-h-[300px] lg:min-h-0">
-                                    <textarea
-                                        readOnly
-                                        value={
-                                            isLoading ? "Processing... please wait." :
-                                            status === 'error' ? `Error: ${errorMessage}` :
-                                            status === 'success' ? extractedText :
-                                            "Extracted text will appear here once processing is complete."
-                                        }
-                                        className={`w-full h-full p-4 rounded-lg bg-slate-800/50 border border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none text-slate-300 placeholder-slate-500 ${status === 'error' ? 'text-red-400' : ''}`}
-                                        placeholder="Extracted text will appear here..."
-                                    />
+
+                                <div className="text-output">
+                                    {isLoading ? (
+                                        <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                            Scanning document... please wait.
+                                        </span>
+                                    ) : status === 'error' ? (
+                                        <span style={{ color: '#b91c1c' }}>
+                                            Error: {errorMessage}
+                                        </span>
+                                    ) : status === 'success' && extractedText ? (
+                                        extractedText
+                                    ) : (
+                                        <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                            Extracted text will appear here after scanning.
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </main>
+
+                    {/* Footer */}
+                    <footer style={{
+                        background: 'white',
+                        borderTop: '1px solid var(--border)',
+                        padding: '16px 24px',
+                        textAlign: 'center',
+                        color: 'var(--text-muted)',
+                        fontSize: '13px'
+                    }}>
+                        Document OCR Scanner • Extract text from images and PDFs
+                    </footer>
                 </div>
             );
         }
@@ -420,6 +708,6 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
-
 </body>
+
 </html>

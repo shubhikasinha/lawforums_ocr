@@ -5,3 +5,5 @@ paddlepaddle
 PyMuPDF
 python-multipart
 python-docx
+opencv-python-headless
+numpy
