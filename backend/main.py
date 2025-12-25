@@ -49,7 +49,7 @@ def get_ocr_engine():
                     cpu_threads=2,  # Limit CPU threads
                     enable_mkldnn=False  # Disable MKLDNN to save memory
                 )
-                print(\"OCR engine loaded successfully.\")
+                print("OCR engine loaded successfully.")
             except Exception as e:
                 print(f"Failed to load OCR engine: {e}")
                 traceback.print_exc()
