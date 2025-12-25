@@ -322,8 +322,6 @@ def process_file_sync(job_id: str, file_bytes: bytes, content_type: str):
 async def read_index():
     return FileResponse('static/index.html')
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
 @app.post("/extract-text")
 async def extract_text(file: UploadFile = File(...)):
     """
