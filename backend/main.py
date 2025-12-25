@@ -1,7 +1,8 @@
 import io
 import traceback
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from docx import Document
@@ -288,8 +289,10 @@ def process_file_sync(job_id: str, file_bytes: bytes, content_type: str):
 # --- API Endpoints ---
 
 @app.get("/")
-def read_root():
-    return {"message": "Advanced OCR Backend is running"}
+async def read_index():
+    return FileResponse('static/index.html')
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 @app.post("/extract-text")
 async def extract_text(file: UploadFile = File(...)):
@@ -424,5 +427,5 @@ async def download_txt(item: TextItem):
 
 if __name__ == "__main__":
     import uvicorn
-    print("Starting server at http://127.0.0.1:8000")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    print("Starting server at http://0.0.0.0:8000")
+    uvicorn.run(app, host="0.0.0.0", port=8000)
