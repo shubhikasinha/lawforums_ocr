@@ -1,5 +1,6 @@
 import io
 import traceback
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,25 +18,27 @@ from threading import Lock
 
 # --- App Initialization ---
 
-app = FastAPI(title="Advanced OCR Backend")
 
-# Add CORS middleware to allow requests from your frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+# Global OCR variable
+ocr = None
 
-# --- Initialize PaddleOCR ---
-# This is done once when the server starts.
-print("Loading PaddleOCR models... This may take a moment.")
-ocr = PaddleOCR(
-    use_angle_cls=True,
-    lang='en'
-)
-print("PaddleOCR models loaded successfully.")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load model on startup
+    global ocr
+    print("Loading PaddleOCR models... This may take a moment.")
+    # We run this in a thread to avoid blocking the event loop potentially, 
+    # though it needs to happen before requests.
+    # Actually, for Koyeb health checks, it's better if we start FAST and load later?
+    # No, we'll load it here.
+    ocr = PaddleOCR(use_angle_cls=True, lang='en')
+    print("PaddleOCR models loaded successfully.")
+    yield
+    # Cleanup if needed
+    print("Shutting down...")
+
+app = FastAPI(title="Advanced OCR Backend", lifespan=lifespan)
+
 
 
 # --- Pydantic Models ---
