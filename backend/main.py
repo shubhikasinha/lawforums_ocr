@@ -19,22 +19,44 @@ from threading import Lock
 # --- App Initialization ---
 
 
+
 # Global OCR variable
-ocr = None
+ocr_engine = None
+ocr_lock = Lock()
+
+def get_ocr_engine():
+    """
+    Lazy-loads the PaddleOCR model on first use.
+    This prevents OOM/Timeouts during app startup (deployment health checks).
+    """
+    global ocr_engine
+    with ocr_lock:
+        if ocr_engine is None:
+            print("Initializing OCR engine (Lazy Load)...")
+            try:
+                # Disable angle_cls to save memory on free tier
+                # Usage of 'use_gpu=False' is explicit
+                ocr_engine = PaddleOCR(
+                    use_angle_cls=False, 
+                    lang='en',
+                    use_gpu=False,
+                    show_log=False
+                )
+                print("OCR engine loaded successfully.")
+            except Exception as e:
+                print(f"Failed to load OCR engine: {e}")
+                traceback.print_exc()
+                # Fallback or re-raise depending on strategy, 
+                # but returning None will just cause 500 on request, which is better than crash on start.
+                return None
+    return ocr_engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load model on startup
-    global ocr
-    print("Loading PaddleOCR models... This may take a moment.")
-    # We run this in a thread to avoid blocking the event loop potentially, 
-    # though it needs to happen before requests.
-    # Actually, for Koyeb health checks, it's better if we start FAST and load later?
-    # No, we'll load it here.
-    ocr = PaddleOCR(use_angle_cls=True, lang='en')
-    print("PaddleOCR models loaded successfully.")
+    # App startup logic
+    print("Application starting...")
     yield
-    # Cleanup if needed
+    # App shutdown logic
     print("Shutting down...")
 
 app = FastAPI(title="Advanced OCR Backend", lifespan=lifespan)
@@ -69,8 +91,13 @@ def run_ocr_on_image(img: np.ndarray) -> str:
         
         print(f"DEBUG: Image shape = {img.shape}, dtype = {img.dtype}")
         
+        # Get OCR engine (lazy load)
+        engine = get_ocr_engine()
+        if engine is None:
+            return "Error: OCR engine could not be initialized (Memory Limit?)"
+
         # Call ocr method
-        result = ocr.ocr(img)
+        result = engine.ocr(img)
         
         if result is None:
             print("DEBUG: OCR returned None")
