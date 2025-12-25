@@ -34,15 +34,22 @@ def get_ocr_engine():
         if ocr_engine is None:
             print("Initializing OCR engine (Lazy Load)...")
             try:
-                # Disable angle_cls to save memory on free tier
-                # Usage of 'use_gpu=False' is explicit
+                # Use lightweight mobile models to reduce memory usage on free tier
+                # det_limit_side_len reduces max image size during detection
+                # rec_batch_num=1 processes one line at a time
                 ocr_engine = PaddleOCR(
-                    use_angle_cls=False, 
+                    use_angle_cls=False,
                     lang='en',
                     use_gpu=False,
-                    show_log=False
+                    show_log=False,
+                    det_model_dir=None,  # Use default lightweight model
+                    rec_model_dir=None,  # Use default lightweight model
+                    det_limit_side_len=960,  # Limit detection image size
+                    rec_batch_num=1,  # Reduce batch size
+                    cpu_threads=2,  # Limit CPU threads
+                    enable_mkldnn=False  # Disable MKLDNN to save memory
                 )
-                print("OCR engine loaded successfully.")
+                print(\"OCR engine loaded successfully.\")
             except Exception as e:
                 print(f"Failed to load OCR engine: {e}")
                 traceback.print_exc()
@@ -452,6 +459,9 @@ async def download_txt(item: TextItem):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating TXT file: {e}")
+
+# Mount static files at the root (Last route to avoid shadowing API endpoints)
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
